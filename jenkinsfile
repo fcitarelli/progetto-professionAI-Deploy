@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "federicocitarelli/progetto-professionai-deploy-sentiment-api"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/fcitarelli/progetto-professionAI-Deploy', branch: 'main'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Tests') {
+            steps {
+                sh 'python -m pytest tests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:latest", "./")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        docker.image("${DOCKER_IMAGE}:latest").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                docker stop ml-container || true
+                docker rm ml-container || true
+                docker run -d -p 8000:8000 --name ml-container ${DOCKER_IMAGE}:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline SUCCESS!'
+        }
+        failure {
+            echo 'Pipeline FAILED!'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
