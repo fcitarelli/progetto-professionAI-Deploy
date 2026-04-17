@@ -43,8 +43,16 @@ pipeline {
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             powershell """
-                            Write-Output \$env:DOCKER_PASS | docker login -u \$env:DOCKER_USER --password-stdin
-                            docker push ${env.DOCKER_IMAGE}:latest
+                            # Eseguiamo il login usando direttamente le variabili d'ambiente
+                            echo \$env:DOCKER_PASS | docker login -u \$env:DOCKER_USER --password-stdin
+                            
+                            # Verifichiamo se il login è riuscito prima di pushare
+                            if (\$?) {
+                                docker push ${env.DOCKER_IMAGE}:latest
+                            } else {
+                                Write-Error "Login su Docker Hub fallito!"
+                                exit 1
+                            }
                             """
                         }
                     }
