@@ -29,21 +29,27 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                powershell "docker build -t ${env.DOCKER_IMAGE}:latest ."
+                powershell """
+                # Rimuove l'immagine locale se esiste già per evitare il blocco "already exists"
+                docker rmi ${env.DOCKER_IMAGE}:latest -f 2>\$null
+                
+                # Build dell'immagine
+                docker build -t ${env.DOCKER_IMAGE}:latest .
+                """
             }
         }
 
         stage('Push Docker Image') {
-            steps {
-                // Qui usiamo correttamente le credenziali di Docker Hub (che hai già salvato)
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    powershell '''
-                    $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
-                    docker push ${env:DOCKER_IMAGE}:latest
-                    '''
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            powershell """
+                            Write-Output \$env:DOCKER_PASS | docker login -u \$env:DOCKER_USER --password-stdin
+                            docker push ${env.DOCKER_IMAGE}:latest
+                            """
+                        }
+                    }
                 }
-            }
-        }
+
 
         stage('Deploy') {
             steps {
