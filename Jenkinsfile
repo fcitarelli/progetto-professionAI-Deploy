@@ -46,9 +46,6 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     powershell '''
-                    Write-Host "User: $env:DOCKER_USER"
-                    Write-Host "Token length: $($env:DOCKER_PASS.Length)"
-
                     Write-Host "Login to Docker Hub..."
 
                     $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
@@ -60,13 +57,6 @@ pipeline {
 
                     Write-Host "Pushing image..."
                     docker push federicocitarelli/sentiment-analysis-api:latest
-
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Error "Docker push failed"
-                        exit 1
-                    }
-
-                    Write-Host "Push completed successfully"
                     '''
                 }
             }
