@@ -40,23 +40,24 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            powershell """
-                            # Eseguiamo il login usando direttamente le variabili d'ambiente
-                            echo \$env:DOCKER_PASS | docker login -u \$env:DOCKER_USER --password-stdin
-                            
-                            # Verifichiamo se il login è riuscito prima di pushare
-                            if (\$?) {
-                                docker push ${env.DOCKER_IMAGE}:latest
-                            } else {
-                                Write-Error "Login su Docker Hub fallito!"
-                                exit 1
-                            }
-                            """
-                        }
-                    }
+        steps {
+            withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                powershell """
+                # Rimuoviamo eventuali spazi bianchi dalla password prima del login
+                \$pass = \$env:DOCKER_PASS.Trim()
+                
+                # Login usando il metodo pipe compatibile con Jenkins Windows
+                Write-Output \$pass | docker login -u \$env:DOCKER_USER --password-stdin
+                
+                if (\$LASTEXITCODE -eq 0) {
+                    docker push ${env.DOCKER_IMAGE}:latest
+                } else {
+                    Write-Error "Login fallito con codice: \$LASTEXITCODE"
+                    exit 1
                 }
+                """
+            }
+        }
 
 
         stage('Deploy') {
