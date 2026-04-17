@@ -40,22 +40,35 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    powershell """
-                    # Pulizia password e login
-                    \$pass = \$env:DOCKER_PASS.Trim()
-                    Write-Output \$pass | docker login -u \$env:DOCKER_USER --password-stdin
-                    
-                    if (\$LASTEXITCODE -eq 0) {
-                        docker push ${env.DOCKER_IMAGE}:latest
-                    } else {
-                        Write-Error "Login fallito"
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    powershell '''
+                    Write-Host "Login to Docker Hub..."
+
+                    # Login usando stdin (come testato in locale)
+                    $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
+
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error "Docker login failed"
                         exit 1
                     }
-                    """
+
+                    Write-Host "Pushing image..."
+                    docker push federicocitarelli/sentiment-analysis-api:latest
+
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error "Docker push failed"
+                        exit 1
+                    }
+
+                    Write-Host "Push completed successfully"
+                    '''
                 }
             }
-        } 
+        }
 
         stage('Deploy') {
             steps {
