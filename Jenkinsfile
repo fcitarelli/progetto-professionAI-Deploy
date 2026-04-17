@@ -53,15 +53,9 @@ pipeline {
                     $token = $env:DOCKER_PASS.Trim()
                     Write-Host "TOKEN_LENGTH=$($token.Length)"
 
-                    # Disabilita il credential helper per evitare problemi su Windows Jenkins
-                    $dockerConfigDir = $env:DOCKER_CONFIG
-                    if (-not $dockerConfigDir) { $dockerConfigDir = "$env:USERPROFILE\\.docker" }
-                    New-Item -ItemType Directory -Force -Path $dockerConfigDir | Out-Null
-                    '{"auths": {}}' | Set-Content -Path "$dockerConfigDir\\config.json" -Encoding ASCII
-
                     docker logout 2>$null
 
-                    $token | docker login -u $env:DOCKER_USER --password-stdin
+                    docker login -u $env:DOCKER_USER -p $token
                     if ($LASTEXITCODE -ne 0) {
                         throw "Docker login fallito. Verifica username e token in Jenkins credentials."
                     }
