@@ -45,8 +45,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 powershell """
-                docker stop sentiment-api 2>$null
-                docker rm sentiment-api 2>$null
+                docker stop sentiment-api 2>\$null
+                docker rm sentiment-api 2>\$null
                 docker run -d -p 8000:8000 --name sentiment-api ${env:DOCKER_IMAGE}:latest
                 """
             }
