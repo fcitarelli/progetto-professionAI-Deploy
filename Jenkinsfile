@@ -46,7 +46,10 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     powershell '''
-                    Write-Host "Login to Docker Hub..."
+                    Write-Host "USER=[$env:DOCKER_USER]"
+                    Write-Host "PASS_LEN=$($env:DOCKER_PASS.Length)"
+
+                    docker logout
 
                     $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
 
@@ -55,7 +58,6 @@ pipeline {
                         exit 1
                     }
 
-                    Write-Host "Pushing image..."
                     docker push federicocitarelli/sentiment-analysis-api:latest
                     '''
                 }
