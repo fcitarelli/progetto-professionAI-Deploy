@@ -24,8 +24,7 @@ Questo repository serve un modello di Sentiment Analysis tramite una REST API Fa
 - `jenkinsfile`: pipeline CI/CD
 - `tests/test_api.py`: test automatici
 - `GRAFANA_SETUP.md`: guida completa per Grafana e testing del CI/CD
-- `test-pipeline.ps1`: script per testare il pipeline su Windows
-- `test-pipeline.sh`: script per testare il pipeline su Linux/macOS
+
 
 ## Requisiti
 - Python 3.11+
@@ -36,7 +35,6 @@ Questo repository serve un modello di Sentiment Analysis tramite una REST API Fa
 1. Crea e attiva un ambiente virtuale:
 ```bash
 python -m venv .venv
-source .venv/bin/activate   # Linux / macOS
 .venv\Scripts\activate    # Windows PowerShell
 ```
 2. Installa le dipendenze:
@@ -103,9 +101,9 @@ La dashboard di Grafana è preconfigurata e mostra in tempo reale:
 - Distribuzione dei tempi di risposta
 - Status code delle risposte
 
-**Nota**: Attendi 15-30 secondi perché Prometheus raccolga i primi dati.
+**Nota**: Attendere 15-30 secondi perché Prometheus raccolga i primi dati.
 
-Per la guida completa, vedi [GRAFANA_SETUP.md](GRAFANA_SETUP.md)
+Per la guida completa, vedi [GRAFANA_SETUP.md]
 
 ## CI/CD Pipeline - Testing Locale
 
@@ -136,15 +134,3 @@ La pipeline Jenkins esegue:
 5. push su registry Docker
 6. deploy del container
 
-**Configurazione Jenkins**: 
-- Crea una new pipeline job in Jenkins
-- Seleziona "Pipeline script from SCM"
-- Repository URL: `https://github.com/fcitarelli/progetto-professionAI-Deploy`
-- Script path: `jenkinsfile`
-- Aggiungi credenziali Docker Hub (settare come `dockerhub-credentials` in Jenkins)
-- Aggiorna `DOCKER_IMAGE` nel jenkinsfile con il tuo username
-
-## Note aggiuntive
-- Il modello è già presente in `sentiment_analysis_model.pkl`.
-- Se vuoi usare Grafana, configura un data source Prometheus che legge `http://<host>:8000/metrics`.
-- Se usi Docker Hub, sostituisci `your-dockerhub-username/ml-model` con il nome reale del tuo repository.
