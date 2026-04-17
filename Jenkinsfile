@@ -8,7 +8,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // AGGIUNTO: credentialsId deve essere l'ID che hai dato alla credenziale su Jenkins
                 git url: 'https://github.com/fcitarelli/progetto-professionAI-Deploy.git', 
                     branch: 'main', 
                     credentialsId: 'github-token-federico' 
@@ -30,7 +29,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 powershell """
-                # Rimuove l'immagine locale se esiste già per evitare il blocco "already exists"
+                # Rimuove l'immagine locale se esiste già
                 docker rmi ${env.DOCKER_IMAGE}:latest -f 2>\$null
                 
                 # Build dell'immagine
@@ -40,25 +39,23 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-        steps {
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                powershell """
-                # Rimuoviamo eventuali spazi bianchi dalla password prima del login
-                \$pass = \$env:DOCKER_PASS.Trim()
-                
-                # Login usando il metodo pipe compatibile con Jenkins Windows
-                Write-Output \$pass | docker login -u \$env:DOCKER_USER --password-stdin
-                
-                if (\$LASTEXITCODE -eq 0) {
-                    docker push ${env.DOCKER_IMAGE}:latest
-                } else {
-                    Write-Error "Login fallito con codice: \$LASTEXITCODE"
-                    exit 1
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    powershell """
+                    # Pulizia password e login
+                    \$pass = \$env:DOCKER_PASS.Trim()
+                    Write-Output \$pass | docker login -u \$env:DOCKER_USER --password-stdin
+                    
+                    if (\$LASTEXITCODE -eq 0) {
+                        docker push ${env.DOCKER_IMAGE}:latest
+                    } else {
+                        Write-Error "Login fallito"
+                        exit 1
+                    }
+                    """
                 }
-                """
             }
-        }
-
+        } 
 
         stage('Deploy') {
             steps {
@@ -67,7 +64,8 @@ pipeline {
                     docker stop sentiment-api
                     docker rm sentiment-api
                 }
-                docker run -d -p 8000:8000 --name sentiment-api ${env:DOCKER_IMAGE}:latest
+                # Corretto env:DOCKER_IMAGE in env.DOCKER_IMAGE per coerenza
+                docker run -d -p 8000:8000 --name sentiment-api ${env.DOCKER_IMAGE}:latest
                 """
             }
         }
