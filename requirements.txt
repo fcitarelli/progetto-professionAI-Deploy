@@ -3,6 +3,6 @@ uvicorn[standard]
 prometheus_client
 pytest
 requests
-scikit-learn
+scikit-learn==1.6.0
 numpy
 pandas
