@@ -44,7 +44,9 @@ pipeline {
                     credentialsId: 'dockerhub-credentials',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
-                )]) {
+                )])
+                Write-Host "User: $env:DOCKER_USER"
+                Write-Host "Token length: $($env:DOCKER_PASS.Length)" {
                     powershell '''
                     Write-Host "Login to Docker Hub..."
 
