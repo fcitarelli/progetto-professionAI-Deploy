@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "federicocitarelli/sentiment-analysis-api"
+        DOCKER_CONFIG = "C:\\ProgramData\\jenkins\\.docker"
     }
 
     stages {
@@ -46,19 +47,29 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     powershell '''
+                    $ErrorActionPreference = "Stop"
+
                     Write-Host "USER=[$env:DOCKER_USER]"
-                    Write-Host "PASS_LEN=$($env:DOCKER_PASS.Length)"
+                    $token = $env:DOCKER_PASS.Trim()
+                    Write-Host "TOKEN_LENGTH=$($token.Length)"
 
-                    docker logout
+                    # Disabilita il credential helper per evitare problemi su Windows Jenkins
+                    $dockerConfigDir = $env:DOCKER_CONFIG
+                    if (-not $dockerConfigDir) { $dockerConfigDir = "$env:USERPROFILE\\.docker" }
+                    New-Item -ItemType Directory -Force -Path $dockerConfigDir | Out-Null
+                    '{"auths": {}}' | Set-Content -Path "$dockerConfigDir\\config.json" -Encoding ASCII
 
-                    $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
+                    docker logout 2>$null
 
+                    $token | docker login -u $env:DOCKER_USER --password-stdin
                     if ($LASTEXITCODE -ne 0) {
-                        Write-Error "Docker login failed"
-                        exit 1
+                        throw "Docker login fallito. Verifica username e token in Jenkins credentials."
                     }
 
                     docker push federicocitarelli/sentiment-analysis-api:latest
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Docker push fallito."
+                    }
                     '''
                 }
             }
