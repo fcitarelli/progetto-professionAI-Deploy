@@ -44,13 +44,13 @@ pipeline {
                     credentialsId: 'dockerhub-credentials',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
-                )])
-                Write-Host "User: $env:DOCKER_USER"
-                Write-Host "Token length: $($env:DOCKER_PASS.Length)" {
+                )]) {
                     powershell '''
+                    Write-Host "User: $env:DOCKER_USER"
+                    Write-Host "Token length: $($env:DOCKER_PASS.Length)"
+
                     Write-Host "Login to Docker Hub..."
 
-                    # Login usando stdin (come testato in locale)
                     $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
 
                     if ($LASTEXITCODE -ne 0) {
