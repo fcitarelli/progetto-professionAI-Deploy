@@ -6,10 +6,12 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/FedericoCitarelli/progetto-professionAI-Deploy.git', branch: 'main'
+                // AGGIUNTO: credentialsId deve essere l'ID che hai dato alla credenziale su Jenkins
+                git url: 'https://github.com/fcitarelli/progetto-professionAI-Deploy.git', 
+                    branch: 'main', 
+                    credentialsId: 'github-token-federico' 
             }
         }
 
@@ -33,9 +35,10 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
+                // Qui usiamo correttamente le credenziali di Docker Hub (che hai già salvato)
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     powershell '''
-                    echo "$env:DOCKER_PASS" | docker login -u "$env:DOCKER_USER" --password-stdin
+                    $env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin
                     docker push ${env:DOCKER_IMAGE}:latest
                     '''
                 }
@@ -45,8 +48,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 powershell """
-                docker stop sentiment-api 2>\$null
-                docker rm sentiment-api 2>\$null
+                if (docker ps -a -q -f name=sentiment-api) {
+                    docker stop sentiment-api
+                    docker rm sentiment-api
+                }
                 docker run -d -p 8000:8000 --name sentiment-api ${env:DOCKER_IMAGE}:latest
                 """
             }
