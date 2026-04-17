@@ -76,7 +76,7 @@ pipeline {
                     docker stop sentiment-api
                     docker rm sentiment-api
                 }
-                # Corretto env:DOCKER_IMAGE in env.DOCKER_IMAGE per coerenza
+                
                 docker run -d -p 8000:8000 --name sentiment-api ${env.DOCKER_IMAGE}:latest
                 """
             }
