@@ -15,13 +15,13 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                powershell 'pip install -r requirements.txt'
             }
         }
 
         stage('Tests') {
             steps {
-                sh 'python -m pytest tests'
+                powershell 'python -m pytest tests'
             }
         }
 
@@ -45,7 +45,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh '''
+                powershell '''
                 docker stop ml-container || true
                 docker rm ml-container || true
                 docker run -d -p 8000:8000 --name ml-container ${DOCKER_IMAGE}:latest
